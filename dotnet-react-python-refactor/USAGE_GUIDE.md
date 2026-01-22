@@ -9,21 +9,43 @@ This comprehensive agent skill guides the systematic refactoring of .NET applica
 ```
 dotnet-to-react-python-refactor/
 ├── SKILL.md                                    # Main skill instructions
+├── USAGE_GUIDE.md                              # This file - comprehensive usage guide
 ├── references/                                  # Detailed reference documentation
 │   ├── architecture-patterns.md                # Architecture patterns for different .NET app types
 │   ├── framework-equivalents.md                # Quick-reference .NET to Python mappings
 │   ├── orm-migration.md                        # Entity Framework to SQLAlchemy/Django ORM mapping
 │   ├── authentication-patterns.md              # Authentication migration patterns
 │   ├── api-integration.md                      # React-Python API integration patterns
-│   └── testing-strategies.md                   # Comprehensive testing approaches
+│   ├── testing-strategies.md                   # Comprehensive testing approaches
+│   ├── security-hardening-checklist.md         # Security best practices and checklist
+│   ├── troubleshooting-guide.md                # Comprehensive troubleshooting solutions
+│   └── deployment-guides/                      # Deployment guides for various platforms
+│       ├── docker-compose-deployment.md        # Docker Compose deployment
+│       └── aws-deployment.md                   # AWS deployment (EC2, ECS, Elastic Beanstalk)
 ├── scripts/                                     # Utility scripts
 │   ├── assess_dotnet_app.py                    # Analyze .NET projects
-│   └── init_python_backend.py                  # Initialize Python backend projects
+│   ├── init_python_backend.py                  # Initialize Python backend projects
+│   ├── generate_migration.py                   # Generate database migrations from .NET models
+│   └── convert_razor_to_jsx.py                 # Convert Razor views to React JSX components
 └── assets/                                      # Templates and resources
     ├── docker-compose.yml                      # Full-stack Docker setup
     ├── .env.example                            # Environment variables template
-    └── react-project-template/                 # React project structure guide
-        └── README.md
+    ├── nginx.conf                              # Nginx reverse proxy configuration
+    ├── Dockerfile.dev                          # Development Dockerfile for frontend
+    ├── react-project-template/                 # React project structure guide
+    │   └── README.md
+    ├── react-component-templates/              # Ready-to-use React component templates
+    │   ├── README.md                           # Component usage guide
+    │   ├── Button.jsx                          # Button component
+    │   ├── Button.css                          # Button styles
+    │   ├── Input.jsx                           # Input component with validation
+    │   ├── Input.css                           # Input styles
+    │   ├── Modal.jsx                           # Modal dialog component
+    │   └── Modal.css                           # Modal styles
+    └── cicd-templates/                         # CI/CD pipeline templates
+        ├── README.md                           # CI/CD setup guide
+        ├── github-actions.yml                  # GitHub Actions workflow
+        └── gitlab-ci.yml                       # GitLab CI/CD pipeline
 ```
 
 ## Quick Start Guide
@@ -205,6 +227,94 @@ Consult this when:
 - Test coverage requirements
 - Testing best practices
 
+### Security Hardening Checklist (`references/security-hardening-checklist.md`)
+
+Consult this when:
+- Preparing for production deployment
+- Conducting security audits
+- Implementing authentication and authorization
+- Securing Docker containers and infrastructure
+- Setting up monitoring and incident response
+
+**Key Topics:**
+- Application security best practices
+- Backend API security (input validation, rate limiting, SQL injection prevention)
+- Frontend security (XSS prevention, CSRF protection, secure token storage)
+- Database security (encrypted connections, access control, backup encryption)
+- Infrastructure security (Docker best practices, secrets management)
+- Authentication & authorization (JWT token security, password hashing)
+- Network security (HTTPS, security headers, CORS configuration)
+- Monitoring and incident response
+
+### Troubleshooting Guide (`references/troubleshooting-guide.md`)
+
+Consult this when:
+- Encountering errors during migration or deployment
+- Debugging database connection issues
+- Solving authentication problems
+- Fixing API and network issues
+- Resolving Docker container problems
+- Addressing performance issues
+
+**Key Topics:**
+- Database issues (connection failures, N+1 queries, migration failures, deadlocks)
+- Authentication & authorization (JWT tokens, CORS errors, session persistence)
+- API & network issues (500 errors, slow responses, timeouts)
+- Frontend issues (blank pages, API call failures, state updates)
+- Docker & container issues (container exits, disk space, port conflicts)
+- Performance problems (high memory usage, slow builds)
+- Deployment issues (SSL certificates, environment variables)
+- Migration-specific issues (date/time handling, decimal precision, EF to SQLAlchemy mapping)
+
+### Deployment Guides (`references/deployment-guides/`)
+
+#### Docker Compose Deployment (`docker-compose-deployment.md`)
+
+**When to use:** Development, staging, and small-scale production deployments
+
+**Covers:**
+- Complete deployment architecture
+- Configuration files (Dockerfile, docker-compose.yml, .env)
+- Development and production deployment workflows
+- Database management and backups
+- Monitoring and logging
+- Scaling services
+- Performance optimization
+- Zero-downtime updates
+- Security best practices
+
+**Steps:**
+1. Project structure setup
+2. Configuration files
+3. Development deployment
+4. Production deployment (with SSL/HTTPS)
+5. Database management and backups
+6. Monitoring and logging
+7. Scaling strategies
+8. Performance optimization
+9. Updates and maintenance
+
+#### AWS Deployment (`aws-deployment.md`)
+
+**When to use:** Cloud deployments requiring scalability and managed services
+
+**Deployment Options:**
+- Option 1: Elastic Beanstalk (quick start, managed platform)
+- Option 2: EC2 + RDS + S3 (full control)
+- Option 3: ECS/Fargate (container-based, microservices)
+
+**Covers:**
+- Complete AWS architecture
+- RDS PostgreSQL and ElastiCache Redis setup
+- EC2/ECS instance configuration
+- S3 + CloudFront for static assets
+- Application Load Balancer setup
+- SSL/TLS with ACM
+- CI/CD with AWS CodePipeline
+- Monitoring with CloudWatch
+- Cost optimization strategies
+- Security best practices
+
 ## Utility Scripts
 
 ### assess_dotnet_app.py
@@ -228,6 +338,94 @@ python scripts/assess_dotnet_app.py <project-path> [-o output-file.json]
 ```bash
 python scripts/assess_dotnet_app.py ./MyDotNetApp -o migration-plan.json
 ```
+
+### generate_migration.py
+
+**Purpose**: Generate Python ORM models and database migrations from .NET Entity Framework models
+
+**Usage**:
+```bash
+python scripts/generate_migration.py <path-to-dotnet-models> \
+  --framework [sqlalchemy|django] \
+  --output ./migrations
+```
+
+**Features**:
+- Parses C# model files (.cs)
+- Extracts properties, data annotations, and relationships
+- Maps C# types to Python/SQLAlchemy types
+- Generates SQLAlchemy or Django ORM models
+- Creates migration guide with step-by-step instructions
+- Handles Entity Framework conventions
+
+**Output**:
+- `models.py` - Complete ORM models
+- `MIGRATION_GUIDE.md` - Instructions for applying migrations
+
+**Example**:
+```bash
+# Generate SQLAlchemy models
+python scripts/generate_migration.py ./dotnet-app/Models \
+  --framework sqlalchemy \
+  --output ./backend/migrations
+
+# Generate Django models
+python scripts/generate_migration.py ./dotnet-app/Models \
+  --framework django \
+  --output ./backend/myapp
+```
+
+**When to use:** Phase 4 (Data Layer Migration) after analyzing existing .NET models
+
+### convert_razor_to_jsx.py
+
+**Purpose**: Convert ASP.NET Razor views to React JSX components
+
+**Usage**:
+```bash
+# Convert single file
+python scripts/convert_razor_to_jsx.py path/to/view.cshtml --output ./converted
+
+# Convert entire directory
+python scripts/convert_razor_to_jsx.py ./Views --output ./frontend/src/components
+```
+
+**Features**:
+- Converts Razor syntax to JSX
+- Transforms HTML helpers to React components
+- Converts tag helpers to JSX equivalents
+- Handles @if/@foreach statements
+- Generates React component boilerplate
+- Includes state management and event handlers
+- Produces conversion report with TODOs
+
+**Conversions Handled**:
+- `@Model.Property` → `{props.property}`
+- `@Html.ActionLink` → `<a href="...">`
+- `@Html.TextBoxFor` → `<Input>` component
+- `@if` conditions → Ternary operators
+- `@foreach` loops → `.map()` iterations
+- Tag helpers → JSX equivalents
+- `class` → `className`
+- `for` → `htmlFor`
+
+**Output**:
+- `.jsx` files for each converted view
+- `CONVERSION_REPORT.md` - Summary and manual review items
+
+**Example**:
+```bash
+python scripts/convert_razor_to_jsx.py ./Views/Home/Index.cshtml
+```
+
+**When to use:** Phase 3 (Frontend Migration) when converting Razor views to React
+
+**Note:** This is semi-automated. Manual review and adjustments are required for:
+- Complex business logic
+- Form submission handlers
+- Client-side validation
+- Nested component structure
+- State management integration
 
 ### init_python_backend.py
 
@@ -320,6 +518,142 @@ nano /path/to/backend/.env
 **Purpose:** React project structure guide with recommended setup and dependencies
 
 **When to use:** Phase 3 (Frontend Migration) - when setting up React project
+
+---
+
+### nginx.conf
+
+**Location:** `assets/nginx.conf`
+
+**Purpose:** Production-ready Nginx reverse proxy configuration
+
+**Features:**
+- Reverse proxy for API requests to backend
+- Static file serving for React frontend
+- CORS header configuration
+- WebSocket support
+- SSL/HTTPS configuration (commented, ready for production)
+- Security headers
+- Gzip compression
+- Health check endpoint
+
+**Usage:**
+```bash
+# Copy to project root
+cp assets/nginx.conf /path/to/your/project/
+
+# Use in docker-compose.yml
+volumes:
+  - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+```
+
+**When to use:** Phase 6 (Deployment) - production deployments with Nginx
+
+---
+
+### Dockerfile.dev
+
+**Location:** `assets/Dockerfile.dev`
+
+**Purpose:** Development Dockerfile for React frontend with hot-reload
+
+**Features:**
+- Based on Node.js Alpine image
+- npm dependencies cached
+- Hot-reload enabled
+- Configured for Vite, CRA, or Next.js
+
+**Usage:**
+```bash
+# Copy to frontend directory
+cp assets/Dockerfile.dev /path/to/frontend/
+
+# Use in docker-compose.yml
+frontend:
+  build:
+    context: ./frontend
+    dockerfile: Dockerfile.dev
+```
+
+**When to use:** Phase 3 (Frontend Migration) - Docker-based development environment
+
+---
+
+### React Component Templates
+
+**Location:** `assets/react-component-templates/`
+
+**Purpose:** Production-ready React component templates
+
+**Available Components:**
+- **Button.jsx** - Flexible button with variants (primary, secondary, danger, success, outline) and sizes
+- **Input.jsx** - Form input with label, validation, error display, and accessibility
+- **Modal.jsx** - Modal dialog with overlay, animations, and keyboard support
+
+**Features:**
+- Full TypeScript/PropTypes support
+- Accessibility (ARIA attributes, keyboard navigation)
+- CSS included with each component
+- Customizable and extensible
+- Production-ready code quality
+
+**Usage:**
+```bash
+# Copy components to your project
+cp -r assets/react-component-templates/* /path/to/frontend/src/components/
+
+# Import and use
+import Button from './components/Button';
+import Input from './components/Input';
+import Modal from './components/Modal';
+```
+
+**When to use:** Phase 3 (Frontend Migration) - as building blocks for converted Razor views
+
+**See also:** `assets/react-component-templates/README.md` for detailed usage examples and customization guide
+
+---
+
+### CI/CD Pipeline Templates
+
+**Location:** `assets/cicd-templates/`
+
+**Purpose:** Ready-to-use CI/CD pipeline configurations
+
+**Available Templates:**
+1. **github-actions.yml** - GitHub Actions workflow
+2. **gitlab-ci.yml** - GitLab CI/CD pipeline
+
+**Features:**
+- Backend testing (Python, pytest, flake8, mypy)
+- Frontend testing (Node.js, Jest, ESLint, TypeScript)
+- Code coverage reporting (Codecov)
+- Security scanning (Snyk, Trivy)
+- Docker image building and publishing
+- Automated deployment to staging/production
+- E2E testing with Playwright
+- Notifications (Slack)
+
+**Usage:**
+```bash
+# For GitHub Actions
+mkdir -p .github/workflows
+cp assets/cicd-templates/github-actions.yml .github/workflows/ci-cd.yml
+
+# For GitLab CI
+cp assets/cicd-templates/gitlab-ci.yml .gitlab-ci.yml
+```
+
+**Setup Requirements:**
+- Configure repository secrets (API tokens, SSH keys, credentials)
+- Customize deployment targets and environments
+- Adjust test commands for your project structure
+
+**When to use:** After Phase 5 (Testing) - to automate build, test, and deployment processes
+
+**See also:** `assets/cicd-templates/README.md` for detailed setup instructions and customization guide
+
+---
 
 ## Common Migration Patterns
 

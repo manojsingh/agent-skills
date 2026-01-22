@@ -293,8 +293,18 @@ Plan the cutover:
 ## Assets
 
 - **react-project-template/**: Base React project structure with recommended setup
+- **react-component-templates/**: Production-ready React components (Button, Input, Modal)
 - **docker-compose.yml**: Full-stack Docker Compose configuration (PostgreSQL, Redis, Backend, Frontend, Nginx)
+- **nginx.conf**: Production-ready Nginx reverse proxy configuration
+- **Dockerfile.dev**: Development Dockerfile for frontend with hot-reload
 - **.env.example**: Environment variables template for configuration
+- **cicd-templates/**: CI/CD pipeline templates (GitHub Actions, GitLab CI)
+
+## Additional Documentation
+
+- **security-hardening-checklist.md**: Comprehensive security checklist for production deployments
+- **troubleshooting-guide.md**: Solutions for common migration and deployment issues
+- **deployment-guides/**: Step-by-step deployment guides for Docker Compose and AWS
 
 ## Notes
 
