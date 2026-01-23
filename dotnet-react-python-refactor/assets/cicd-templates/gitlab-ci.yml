@@ -1,0 +1,179 @@
+# GitLab CI/CD Pipeline
+# Full-stack React + Python application
+
+variables:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+  POSTGRES_DB: testdb
+  POSTGRES_USER: testuser
+  POSTGRES_PASSWORD: testpass
+  DATABASE_URL: postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@postgres:5432/$POSTGRES_DB
+  REDIS_URL: redis://redis:6379/0
+
+stages:
+  - test
+  - build
+  - deploy
+
+# Backend Tests
+backend:test:
+  stage: test
+  image: python:$PYTHON_VERSION
+  services:
+    - postgres:15
+    - redis:7-alpine
+  before_script:
+    - cd backend
+    - pip install -r requirements.txt
+    - pip install -r requirements-dev.txt
+  script:
+    - flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+    - mypy app || true
+    - pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: backend/coverage.xml
+
+# Frontend Tests
+frontend:test:
+  stage: test
+  image: node:$NODE_VERSION
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm run lint
+    - npm run type-check || true
+    - npm test -- --coverage --watchAll=false
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: frontend/coverage/cobertura-coverage.xml
+
+# Security Scanning
+security:scan:
+  stage: test
+  image: python:$PYTHON_VERSION
+  script:
+    - pip install safety bandit
+    - safety check --file backend/requirements.txt || true
+    - bandit -r backend/app -f json -o bandit-report.json || true
+  artifacts:
+    reports:
+      sast: bandit-report.json
+  allow_failure: true
+
+# Build Backend Docker Image
+backend:build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd backend
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA .
+    - docker tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/backend:latest
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/backend:latest
+  only:
+    - main
+    - develop
+
+# Build Frontend Docker Image
+frontend:build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd frontend
+    - docker build -t $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA .
+    - docker tag $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA $CI_REGISTRY_IMAGE/frontend:latest
+    - docker push $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/frontend:latest
+  only:
+    - main
+    - develop
+
+# Deploy to Staging
+deploy:staging:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$STAGING_SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $STAGING_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh $STAGING_USER@$STAGING_HOST << 'EOF'
+        cd /opt/app
+        docker-compose pull
+        docker-compose up -d
+        docker-compose exec -T backend alembic upgrade head
+      EOF
+  environment:
+    name: staging
+    url: https://staging.yourdomain.com
+  only:
+    - develop
+
+# Deploy to Production
+deploy:production:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client curl
+    - eval $(ssh-agent -s)
+    - echo "$PRODUCTION_SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $PRODUCTION_HOST >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh $PRODUCTION_USER@$PRODUCTION_HOST << 'EOF'
+        cd /opt/app
+        docker-compose pull
+        docker-compose up -d
+        docker-compose exec -T backend alembic upgrade head
+      EOF
+    - sleep 30
+    - curl -f https://yourdomain.com/api/health || exit 1
+  environment:
+    name: production
+    url: https://yourdomain.com
+  only:
+    - main
+  when: manual
+
+# E2E Tests on Staging
+e2e:test:
+  stage: deploy
+  image: mcr.microsoft.com/playwright:latest
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npx playwright test
+  environment:
+    name: staging
+  variables:
+    BASE_URL: https://staging.yourdomain.com
+  artifacts:
+    when: always
+    paths:
+      - frontend/playwright-report/
+    expire_in: 30 days
+  only:
+    - develop
