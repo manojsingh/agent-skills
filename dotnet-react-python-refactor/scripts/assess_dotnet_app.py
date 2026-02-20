@@ -14,6 +14,8 @@ from collections import defaultdict
 
 
 class DotNetAssessor:
+    MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB — skip files larger than this
+
     def __init__(self, project_path: str):
         self.project_path = Path(project_path)
         self.inventory = {
@@ -46,6 +48,19 @@ class DotNetAssessor:
         
         return self.inventory
     
+    def _read_file(self, file_path) -> str:
+        """Read a file, returning empty string if it exceeds the size limit or cannot be read."""
+        try:
+            stat = file_path.stat()
+            if stat.st_size > self.MAX_FILE_SIZE_BYTES:
+                print(f"  Skipping large file: {file_path} ({stat.st_size} bytes)")
+                return ""
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        except (OSError, PermissionError) as e:
+            print(f"  Skipping unreadable file: {file_path} ({e})")
+            return ""
+
     def _detect_project_type(self):
         """Detect the type of .NET project"""
         csproj_files = list(self.project_path.glob("**/*.csproj"))
@@ -55,8 +70,7 @@ class DotNetAssessor:
             return
         
         # Read first csproj to determine type
-        with open(csproj_files[0], 'r', encoding='utf-8') as f:
-            content = f.read()
+        content = self._read_file(csproj_files[0])
         
         if 'Microsoft.NET.Sdk.Web' in content:
             if 'Microsoft.AspNetCore.Mvc' in content:
@@ -75,8 +89,9 @@ class DotNetAssessor:
         controller_files = list(self.project_path.glob("**/Controllers/**/*.cs"))
         
         for file_path in controller_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self._read_file(file_path)
+            if not content:
+                continue
             
             # Extract controller name
             class_match = re.search(r'class\s+(\w+Controller)', content)
@@ -145,8 +160,9 @@ class DotNetAssessor:
             model_files.extend(self.project_path.glob(pattern))
         
         for file_path in model_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self._read_file(file_path)
+            if not content:
+                continue
             
             # Extract class name
             class_matches = re.finditer(r'public\s+class\s+(\w+)', content)
@@ -185,8 +201,9 @@ class DotNetAssessor:
         service_files = list(self.project_path.glob("**/Services/**/*.cs"))
         
         for file_path in service_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self._read_file(file_path)
+            if not content:
+                continue
             
             # Extract interface and class names
             interfaces = re.findall(r'interface\s+(I\w+)', content)
@@ -204,9 +221,10 @@ class DotNetAssessor:
         cs_files = list(self.project_path.glob("**/*.cs"))
         
         for file_path in cs_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
+            content = self._read_file(file_path)
+            if not content:
+                continue
+
             if 'DbContext' in content:
                 context_match = re.search(r'class\s+(\w+)\s*:\s*DbContext', content)
                 if context_match:
@@ -226,8 +244,9 @@ class DotNetAssessor:
         csproj_files = list(self.project_path.glob("**/*.csproj"))
         
         for file_path in csproj_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
+            content = self._read_file(file_path)
+            if not content:
+                continue
             
             # Extract PackageReference entries
             packages = re.findall(
@@ -269,9 +288,10 @@ class DotNetAssessor:
         cs_files = list(self.project_path.glob("**/*.cs"))
         
         for file_path in cs_files:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
+            content = self._read_file(file_path)
+            if not content:
+                continue
+
             if 'AddIdentity' in content or 'IdentityUser' in content:
                 self.inventory["authentication"] = "ASP.NET Identity"
                 return

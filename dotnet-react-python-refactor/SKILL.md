@@ -1,315 +1,135 @@
 ---
 name: dotnet-to-react-python-refactor
-description: Comprehensive agent skill for refactoring .NET applications into a modern React frontend and Python backend architecture. Use when users request to migrate, refactor, or modernize .NET applications to a React + Python stack, or when analyzing .NET codebases for migration planning. Handles full-stack migration including backend API conversion, frontend rewrite, data layer migration, authentication, and deployment strategy.
+description: Agent skill for refactoring .NET applications into a React frontend + Python backend. Use for migrating/modernizing .NET apps (ASP.NET MVC, Web API, Blazor, Web Forms) to React + Python, or analyzing .NET codebases for migration planning.
 ---
 
 # .NET to React + Python Refactor Agent
 
-This skill guides the systematic refactoring of .NET applications into a React frontend with Python backend architecture.
-
 ## Core Workflow
 
-### Phase 1: Assessment and Architecture Planning
+### Phase 1: Assessment & Architecture Planning
 
-**1. Analyze Current .NET Application**
+1. **Analyze .NET application** — run the assessment script:
+   ```bash
+   python scripts/assess_dotnet_app.py /path/to/dotnet/project
+   ```
+   Outputs: project type, controllers, models, views, services, DB contexts, auth, NuGet packages.
 
-Examine the existing codebase structure:
-- Identify application type (ASP.NET MVC, Web Forms, Web API, Blazor, etc.)
-- Map controllers, models, views, and data access layers
-- Document external dependencies and integrations
-- Identify authentication/authorization mechanisms
-- List database connections and ORM usage (Entity Framework, Dapper, etc.)
-- Note third-party packages and their Python/React equivalents
-
-Run the assessment script to generate a migration inventory:
-```bash
-python scripts/assess_dotnet_app.py /path/to/dotnet/project
-```
-
-**2. Design Target Architecture**
-
-Define the new architecture based on assessment results:
-- **Frontend**: React SPA with routing, state management, and UI framework
-- **Backend**: Python REST API (FastAPI/Flask/Django) with appropriate ORM
-- **Data Layer**: Database migration strategy (same DB or migration required)
-- **Authentication**: JWT, OAuth2, or session-based approach
-- **API Contract**: RESTful design with clear endpoint mapping
-
-Create an architecture document (use references/architecture-patterns.md for guidance).
+2. **Design target architecture** (see `references/architecture-patterns.md`):
+   - Frontend: React SPA (routing, state management, UI framework)
+   - Backend: Python REST API (FastAPI/Flask/Django) + ORM
+   - Auth: JWT, OAuth2, or session-based
+   - Data: same DB or migration strategy
 
 ### Phase 2: Backend Migration (.NET → Python)
 
-**1. Set Up Python Backend Framework**
+1. **Initialize Python backend**:
+   ```bash
+   python scripts/init_python_backend.py <name> --framework fastapi --db-type postgresql
+   ```
+   Framework choice: **FastAPI** (async, OpenAPI docs), **Flask** (lightweight), **Django REST** (full-featured with ORM/admin).
 
-Choose framework based on application complexity:
-- **FastAPI**: Modern async API, automatic OpenAPI docs, high performance
-- **Flask**: Lightweight, flexible, good for simple to medium APIs
-- **Django REST Framework**: Full-featured, includes ORM and admin panel
+2. **Migrate business logic**: map .NET controllers → Python endpoints; translate C# classes, LINQ → Python/ORM queries, async/await patterns. See `references/framework-equivalents.md`.
 
-Initialize project structure:
-```bash
-python scripts/init_python_backend.py --framework fastapi --db-type postgresql
-```
+3. **Data access**: map Entity Framework models → SQLAlchemy/Django ORM; convert queries and stored procedures. See `references/orm-migration.md`.
 
-**2. Migrate Business Logic**
-
-Convert .NET controllers and services to Python:
-
-a. **Map Routes and Endpoints**
-   - Document all .NET controller routes
-   - Design equivalent REST endpoints
-   - Consider RESTful conventions and resource naming
-
-b. **Convert Business Logic**
-   - Translate C# classes to Python classes
-   - Convert LINQ queries to Python list comprehensions or database queries
-   - Handle async/await patterns appropriately
-   - Replace .NET-specific types with Python equivalents
-
-c. **Data Access Layer Migration**
-   - Map Entity Framework models to SQLAlchemy/Django ORM models
-   - Convert database queries and stored procedures
-   - Implement repository pattern if used in original
-   - Consider references/orm-migration.md for detailed ORM patterns
-
-**3. Implement API Endpoints**
-
-For each .NET controller action, create corresponding Python endpoint:
-- Match HTTP methods (GET, POST, PUT, DELETE)
-- Implement request/response DTOs with Pydantic (FastAPI) or dataclasses
-- Add input validation and error handling
-- Include proper status codes and error messages
-
-**4. Authentication and Authorization**
-
-Convert .NET authentication to Python equivalent:
-- Map ASP.NET Identity to JWT tokens or session-based auth
-- Implement role-based or policy-based authorization
-- Migrate user management and password hashing
-- See references/authentication-patterns.md for implementation patterns
+4. **Auth**: map ASP.NET Identity → JWT tokens or session auth; preserve role-based/policy authorization. See `references/authentication-patterns.md`.
 
 ### Phase 3: Frontend Migration (.NET Views → React)
 
-**1. Initialize React Application**
+1. **Initialize React** (Vite recommended):
+   ```bash
+   npm create vite@latest frontend -- --template react-ts
+   ```
+   See `assets/react-project-template/` for recommended structure.
 
-Choose setup based on requirements:
-```bash
-# For modern React with build tools
-npx create-react-app frontend
-# Or for production-ready setup with routing
-npx create-next-app frontend
-# Or use Vite for faster development
-npm create vite@latest frontend -- --template react-ts
-```
+2. **Convert Razor views** to JSX (semi-automated):
+   ```bash
+   python scripts/convert_razor_to_jsx.py ./Views --output ./frontend/src/components
+   ```
+   Use `assets/react-component-templates/` for production-ready Button, Input, and Modal components.
 
-Configure project structure using assets/react-project-template/ as reference.
+3. **State management**: Context API (small apps), Zustand (medium), Redux Toolkit (large); convert ViewBag/ViewData to component or global state.
 
-**2. Component Extraction and Migration**
+4. **Routing**: replace ASP.NET routing with React Router; implement protected routes for authenticated pages.
 
-Convert .NET views to React components:
+5. **API integration**: React Query + axios with auth interceptors. See `references/api-integration.md`.
 
-a. **Identify View Hierarchy**
-   - Map Razor views/pages to React component structure
-   - Identify reusable partial views as React components
-   - Plan component composition and prop flow
-
-b. **Convert Markup**
-   - Transform Razor syntax to JSX
-   - Convert server-side logic to client-side state management
-   - Replace HTML helpers with React component libraries
-   - Update form handling from server-side to client-side validation
-
-c. **State Management**
-   - Choose state management approach (Context API, Redux, Zustand)
-   - Convert ViewBag/ViewData/TempData to component state or global state
-   - Implement client-side caching strategies for API data
-
-**3. Routing and Navigation**
-
-Replace ASP.NET routing with React Router:
-- Map route definitions from .NET to React Router
-- Implement protected routes for authenticated pages
-- Add navigation components (headers, menus, breadcrumbs)
-- Handle deep linking and browser history
-
-**4. API Integration**
-
-Connect React frontend to Python backend:
-- Create API client layer (axios, fetch, or React Query)
-- Implement request/response interceptors for auth tokens
-- Add loading states and error handling
-- Consider references/api-integration.md for patterns
-
-**5. Forms and Validation**
-
-Migrate form handling:
-- Use form libraries (React Hook Form, Formik) for complex forms
-- Implement client-side validation matching backend rules
-- Convert .NET ModelState to React validation patterns
-- Add proper error display and user feedback
+6. **Forms**: React Hook Form or Formik; client-side validation matching backend rules.
 
 ### Phase 4: Data Layer Migration
 
-**1. Database Schema Review**
+1. **Generate ORM models**:
+   ```bash
+   python scripts/generate_migration.py /path/to/models --framework sqlalchemy --output ./migrations
+   ```
 
-Assess database migration needs:
-- Review existing schema compatibility with Python ORM
-- Identify .NET-specific features (computed columns, spatial types)
-- Plan schema modifications if needed
-- Consider backward compatibility during transition
+2. **Preserve** relationships, constraints, indexes, and custom type mappings.
 
-**2. ORM Model Creation**
+3. **Apply migrations**: Alembic (SQLAlchemy) or Django migrations.
 
-Create Python ORM models:
-- Map Entity Framework entities to SQLAlchemy/Django models
-- Preserve relationships (one-to-many, many-to-many)
-- Implement database constraints and indexes
-- Handle custom types and converters
+### Phase 5: Testing & Validation
 
-**3. Data Migration Scripts**
+- **Backend** (pytest): unit tests, endpoint integration tests, auth flows, error handling.
+- **Frontend** (Jest + RTL): component tests; Cypress/Playwright for E2E.
+- **Data integrity**: compare query results between .NET and Python; validate CRUD and cascading deletes.
 
-If database changes are required:
-```bash
-python scripts/generate_migration.py --from-dotnet-models /path/to/models
-```
+### Phase 6: Deployment
 
-Create Alembic (SQLAlchemy) or Django migrations for schema changes.
-
-### Phase 5: Testing and Validation
-
-**1. API Testing**
-
-Implement comprehensive API tests:
-- Unit tests for business logic
-- Integration tests for endpoints
-- Test authentication and authorization flows
-- Validate error handling and edge cases
-
-Use pytest for Python backend testing.
-
-**2. Frontend Testing**
-
-Test React components and integration:
-- Unit tests with Jest and React Testing Library
-- Component integration tests
-- End-to-end tests with Cypress or Playwright
-- Visual regression testing if needed
-
-**3. Data Integrity Verification**
-
-Ensure data consistency:
-- Compare database query results between .NET and Python
-- Validate CRUD operations match expected behavior
-- Test data migrations if performed
-- Verify relationships and cascading deletes
-
-### Phase 6: Deployment Strategy
-
-**1. Environment Configuration**
-
-Set up deployment environments:
-- Configure environment variables for both frontend and backend
-- Set up secrets management (database credentials, API keys)
-- Prepare environment-specific configs (dev, staging, production)
-
-**2. Backend Deployment**
-
-Deploy Python API:
-- Choose hosting platform (AWS, Azure, Google Cloud, Heroku, DigitalOcean)
-- Set up WSGI/ASGI server (Gunicorn, Uvicorn)
-- Configure reverse proxy (Nginx, Apache)
-- Implement health checks and monitoring
-- Set up database connection pooling
-
-**3. Frontend Deployment**
-
-Deploy React application:
-- Build production bundle
-- Choose static hosting (Netlify, Vercel, S3 + CloudFront)
-- Configure environment-specific API endpoints
-- Set up CDN for assets
-- Implement cache strategies
-
-**4. Migration Strategy**
-
-Plan the cutover:
-- **Big Bang**: Complete switch at once (higher risk, faster completion)
-- **Strangler Fig**: Gradually migrate features (lower risk, longer timeline)
-- **Parallel Run**: Run both systems temporarily for validation
+1. **Environment**: configure env vars, secrets, and per-environment configs (dev/staging/prod).
+2. **Backend**: Gunicorn/Uvicorn + Nginx reverse proxy; health checks and DB connection pooling.
+3. **Frontend**: production build → static hosting (Netlify, Vercel, S3+CloudFront); CDN for assets.
+4. **Cutover strategy**: Big Bang (fast, higher risk) | Strangler Fig (incremental, lower risk) | Parallel Run.
+5. See `references/deployment-guides/` for step-by-step Docker Compose and AWS guides. Use `assets/docker-compose.yml` and `assets/nginx.conf`.
 
 ## Execution Guidelines
 
-### Order of Operations
+**Order**: backend first → frontend as endpoints become available → staging validation → cutover with rollback plan.
 
-1. Start with backend API migration for critical business logic
-2. Create frontend components as backend endpoints become available
-3. Test integration continuously during development
-4. Deploy to staging environment for validation
-5. Perform final cutover with rollback plan
+**Key pitfalls**:
+- N+1 queries: Python ORM lazy loading differs from Entity Framework
+- Async/await: C# and Python semantics differ
+- Timezones: standardize on UTC
+- Decimal precision: map carefully for financial calculations
 
-### Common Pitfalls to Avoid
+**Standards**: PEP 8 + type hints + mypy (Python); ESLint + Prettier + TypeScript (React); 80%+ test coverage.
 
-- **Don't replicate technical debt**: Use migration as opportunity to improve architecture
-- **Watch for N+1 queries**: Python ORMs handle lazy loading differently than EF
-- **Async patterns**: Be mindful of async/await differences between C# and Python
-- **Error handling**: Ensure Python exception handling matches .NET try-catch patterns
-- **Timezone handling**: .NET and Python handle timezones differently; standardize on UTC
-- **Decimal precision**: Financial calculations require careful type mapping
+**Performance**: profile DB queries early; add Redis caching; paginate large datasets; use React.memo/useMemo and lazy loading.
 
-### Code Quality Standards
+## Quick Reference
 
-- Follow PEP 8 for Python code
-- Use ESLint and Prettier for React code
-- Implement type hints in Python (using mypy)
-- Use TypeScript for React if type safety is important
-- Write comprehensive docstrings and comments
-- Maintain test coverage above 80%
+### Scripts
 
-### Performance Considerations
+| Script | Purpose |
+|--------|---------|
+| `assess_dotnet_app.py` | Generate migration inventory from .NET project |
+| `init_python_backend.py` | Scaffold Python backend (FastAPI/Flask/Django) |
+| `generate_migration.py` | Create ORM models from .NET Entity Framework models |
+| `convert_razor_to_jsx.py` | Convert Razor views to React JSX |
 
-- Profile database queries during migration
-- Implement caching strategies early (Redis, in-memory)
-- Optimize API response sizes with proper serialization
-- Use React.memo and useMemo for expensive components
-- Implement pagination for large datasets
-- Consider lazy loading for frontend components
+### Reference Docs (`references/`)
 
-## Reference Files
+| File | Use When |
+|------|---------|
+| `architecture-patterns.md` | Planning architecture or choosing tech stack |
+| `framework-equivalents.md` | Mapping .NET → Python technologies and packages |
+| `orm-migration.md` | Entity Framework → SQLAlchemy/Django ORM |
+| `authentication-patterns.md` | Implementing auth migration |
+| `api-integration.md` | React–Python API client patterns |
+| `testing-strategies.md` | Setting up tests and coverage |
+| `security-hardening-checklist.md` | Pre-production security audit |
+| `troubleshooting-guide.md` | Debugging migration and deployment issues |
+| `deployment-guides/docker-compose-deployment.md` | Docker Compose deployment |
+| `deployment-guides/aws-deployment.md` | AWS deployment (Elastic Beanstalk, EC2, ECS) |
 
-- **architecture-patterns.md**: Detailed architecture patterns for different .NET app types
-- **framework-equivalents.md**: Quick-reference tables mapping .NET technologies to Python equivalents
-- **orm-migration.md**: ORM mapping patterns and common translations
-- **authentication-patterns.md**: Authentication implementation examples
-- **api-integration.md**: API client patterns and best practices
-- **testing-strategies.md**: Comprehensive testing approaches for both stacks
+### Assets (`assets/`)
 
-## Scripts
-
-- **assess_dotnet_app.py**: Generates migration inventory from .NET project
-- **init_python_backend.py**: Scaffolds Python backend project structure
-- **generate_migration.py**: Creates database migration from .NET models
-- **convert_razor_to_jsx.py**: Assists in converting Razor syntax to JSX
-
-## Assets
-
-- **react-project-template/**: Base React project structure with recommended setup
-- **react-component-templates/**: Production-ready React components (Button, Input, Modal)
-- **docker-compose.yml**: Full-stack Docker Compose configuration (PostgreSQL, Redis, Backend, Frontend, Nginx)
-- **nginx.conf**: Production-ready Nginx reverse proxy configuration
-- **Dockerfile.dev**: Development Dockerfile for frontend with hot-reload
-- **.env.example**: Environment variables template for configuration
-- **cicd-templates/**: CI/CD pipeline templates (GitHub Actions, GitLab CI)
-
-## Additional Documentation
-
-- **security-hardening-checklist.md**: Comprehensive security checklist for production deployments
-- **troubleshooting-guide.md**: Solutions for common migration and deployment issues
-- **deployment-guides/**: Step-by-step deployment guides for Docker Compose and AWS
-
-## Notes
-
-- This skill assumes familiarity with both .NET and modern Python/React development
-- Adjust complexity and depth based on application size and team expertise
-- Consider incremental migration for large applications
-- Maintain documentation throughout the migration process
-- Plan for knowledge transfer if team skills differ between stacks
+| Asset | Purpose |
+|-------|---------|
+| `react-project-template/` | React project structure guide |
+| `react-component-templates/` | Button, Input, Modal components with CSS |
+| `docker-compose.yml` | Full-stack Docker setup (PostgreSQL, Redis, Nginx) |
+| `nginx.conf` | Production Nginx reverse proxy |
+| `Dockerfile.dev` | Development frontend Dockerfile with hot-reload |
+| `.env.example` | Environment variables template |
+| `cicd-templates/` | GitHub Actions and GitLab CI/CD pipelines |
