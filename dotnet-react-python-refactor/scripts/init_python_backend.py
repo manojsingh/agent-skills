@@ -130,8 +130,7 @@ settings = Settings()
         # Create database.py
         db_content = f'''"""Database Configuration"""
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import settings
 
 engine = create_engine(settings.DATABASE_URL)
@@ -349,7 +348,7 @@ if __name__ == '__main__':
     
     def _init_django(self):
         """Initialize Django project structure"""
-        print("Note: For Django, use: django-admin startproject {self.project_name}")
+        print(f"Note: For Django, use: django-admin startproject {self.project_name}")
         print("Then run: python manage.py startapp api")
         return
     
