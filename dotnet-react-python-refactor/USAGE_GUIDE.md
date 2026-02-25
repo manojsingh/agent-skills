@@ -294,26 +294,7 @@ Consult this when:
 8. Performance optimization
 9. Updates and maintenance
 
-#### AWS Deployment (`aws-deployment.md`)
 
-**When to use:** Cloud deployments requiring scalability and managed services
-
-**Deployment Options:**
-- Option 1: Elastic Beanstalk (quick start, managed platform)
-- Option 2: EC2 + RDS + S3 (full control)
-- Option 3: ECS/Fargate (container-based, microservices)
-
-**Covers:**
-- Complete AWS architecture
-- RDS PostgreSQL and ElastiCache Redis setup
-- EC2/ECS instance configuration
-- S3 + CloudFront for static assets
-- Application Load Balancer setup
-- SSL/TLS with ACM
-- CI/CD with AWS CodePipeline
-- Monitoring with CloudWatch
-- Cost optimization strategies
-- Security best practices
 
 ## Utility Scripts
 
